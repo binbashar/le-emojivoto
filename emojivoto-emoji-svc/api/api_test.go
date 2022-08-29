@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/buoyantio/emojivoto/emojivoto-emoji-svc/emoji"
-	pb "github.com/buoyantio/emojivoto/emojivoto-emoji-svc/gen/proto"
+	"github.com/binbashar/le-emojivoto/emojivoto-emoji-svc/emoji"
+	pb "github.com/binbashar/le-emojivoto/emojivoto-emoji-svc/gen/proto"
 )
 
 func TestListAll(t *testing.T) {

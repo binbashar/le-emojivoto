@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	pb "github.com/buoyantio/emojivoto/emojivoto-web/gen/proto"
-	"github.com/buoyantio/emojivoto/emojivoto-web/web"
+	pb "github.com/binbashar/le-emojivoto/emojivoto-web/gen/proto"
+	"github.com/binbashar/le-emojivoto/emojivoto-web/web"
 	"google.golang.org/grpc"
 	"contrib.go.opencensus.io/exporter/ocagent"
 	"go.opencensus.io/plugin/ocgrpc"

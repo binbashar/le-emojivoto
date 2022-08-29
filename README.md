@@ -66,7 +66,7 @@ The web app will be running on port 8080 of your docker host.
 To deploy standalone to an existing cluster:
 
 ```bash
-kubectl apply -k github.com/BuoyantIO/emojivoto/kustomize/deployment
+kubectl apply -k github.com/binbashar/le-emojivoto/kustomize/deployment
 ```
 
 ### Generating some traffic

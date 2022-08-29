@@ -1,4 +1,4 @@
-module github.com/buoyantio/emojivoto
+module github.com/binbashar/emojivoto
 
 go 1.13
 
