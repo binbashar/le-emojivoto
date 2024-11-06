@@ -1,4 +1,4 @@
-module github.com/binbashar/emojivoto
+module github.com/binbashar/le-emojivoto
 
 go 1.13
 
