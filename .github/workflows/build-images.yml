@@ -1,0 +1,209 @@
+name: Build Images
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '.github/**'
+      - 'LICENSE'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  id-token: write # For requesting the JWT for OIDC
+  contents: write
+
+env:
+  REGION: "us-east-1"
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '^1.17.3'
+
+    - name: Install Go dependencies
+      run: |
+        go get google.golang.org/protobuf/cmd/protoc-gen-go
+        go install google.golang.org/protobuf/cmd/protoc-gen-go
+
+        go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+        go get github.com/census-instrumentation/opencensus-proto/gen-go/agent/metrics/v1@v0.4.1
+        go get google.golang.org/grpc/status@v1.65.0
+
+    # - name: Notify Build Start
+    #   uses: slackapi/slack-github-action@v1.23.0
+    #   with:
+    #     payload: |
+    #       {
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": ":construction: *Image build job for `${{ github.repository }}`:*"
+    #             }
+    #           }
+    #         ],
+    #         "attachments": [
+    #           {
+    #             "color": "#3C8FD3",
+    #             "blocks": [
+    #               {
+    #                 "type": "section",
+    #                 "text": {
+    #                   "type": "mrkdwn",
+    #                   "text": "_Job:_ <${{ github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }}/|#${{ github.run_number }}>\n_Status:_ *STARTED*"
+    #                 }
+    #               },
+    #               {
+    #                 "type": "context",
+    #                 "elements": [
+    #                   {
+    #                     "type": "plain_text",
+    #                     "text": "Author: ${{ github.actor }}"
+    #                   }
+    #                 ]
+    #               }
+    #             ]
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_CHANNEL_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4.0.2
+      with:
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_SHARED_ACCOUNT_ID }}:role/shared-github-actions-oidc
+        aws-region: ${{ env.REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2.0.1
+
+    - name: Build Images
+      run: |
+        export NODE_OPTIONS=--openssl-legacy-provider
+
+        # Build base image
+        make build-base-docker-image
+        # Build emojivoto images
+        make build
+        # Drop base image
+        docker rmi $(docker images --format "table {{.Repository}}:{{.Tag}}" | grep svc-base)
+
+    - name: Tag and Push Images
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        for BUILT_IMAGE in $(docker images --format "table {{.Repository}}:{{.Tag}}" | grep emojivoto); do
+
+          IMAGE_REPOSITORY=$(echo $BUILT_IMAGE | cut -d ':' -f 1 | cut -d '/' -f 2)
+
+          # Docker needs full name as <registry-url>/<repository>:<image-tag>
+          # Build image tag as <workflow-run-number>-<commit-short-sha-hash>
+          FULL_IMAGE_NAME="$ECR_REGISTRY/$IMAGE_REPOSITORY:$GITHUB_RUN_NUMBER-${GITHUB_SHA:0:7}"
+
+          docker tag $BUILT_IMAGE $FULL_IMAGE_NAME
+          docker push $FULL_IMAGE_NAME
+
+        done
+
+    # - name: Notify Build Success
+    #   if: ${{ success() }}
+    #   uses: slackapi/slack-github-action@v1.23.0
+    #   with:
+    #     payload: |
+    #       {
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": ":rocket: *Image build job for `${{ github.repository }}`:*"
+    #             }
+    #           }
+    #         ],
+    #         "attachments": [
+    #           {
+    #             "color": "#A9D071",
+    #             "blocks": [
+    #               {
+    #                 "type": "section",
+    #                 "text": {
+    #                   "type": "mrkdwn",
+    #                   "text": "_Job:_ <${{ github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }}/|#${{ github.run_number }}>\n_Status:_ *SUCCESS*\n_Build tag:_ `<${{ github.server_url}}/${{ github.repository }}/tree/${{ env.FULL_DEPLOY_TAG }}|${{ env.FULL_DEPLOY_TAG }}>`\n_ECR Image tag:_ `${{ env.IMAGE_TAG }}`\n_Changes made:_ <${{ env.LAST_CHANGES_URL }}|Show changes in Github>"
+    #                 }
+    #               },
+    #               {
+    #                 "type": "context",
+    #                 "elements": [
+    #                   {
+    #                     "type": "plain_text",
+    #                     "text": "Author: ${{ github.actor }}"
+    #                   }
+    #                 ]
+    #               }
+    #             ]
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_CHANNEL_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+    # - name: Notify Build Failure
+    #   if: ${{ failure() }}
+    #   uses: slackapi/slack-github-action@v1.23.0
+    #   with:
+    #     payload: |
+    #       {
+    #         "blocks": [
+    #           {
+    #             "type": "section",
+    #             "text": {
+    #               "type": "mrkdwn",
+    #               "text": "🛑 *Image build job for `${{ github.repository }}`:*"
+    #             }
+    #           }
+    #         ],
+    #         "attachments": [
+    #           {
+    #             "color": "#DC3545",
+    #             "blocks": [
+    #               {
+    #                 "type": "section",
+    #                 "text": {
+    #                   "type": "mrkdwn",
+    #                   "text": "_Job:_ <${{ github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }}/|#${{ github.run_number }}>\n_Status:_ *FAILURE*"
+    #                 }
+    #               },
+    #               {
+    #                 "type": "context",
+    #                 "elements": [
+    #                   {
+    #                     "type": "plain_text",
+    #                     "text": "Author: ${{ github.actor }}"
+    #                   }
+    #                 ]
+    #               }
+    #             ]
+    #           }
+    #         ]
+    #       }
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_CHANNEL_URL }}
+    #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
