@@ -42,6 +42,8 @@ jobs:
         go get github.com/census-instrumentation/opencensus-proto/gen-go/agent/metrics/v1@v0.4.1
         go get google.golang.org/grpc/status@v1.65.0
 
+        go get contrib.go.opencensus.io/exporter/ocagent@v0.6.0
+
     # - name: Notify Build Start
     #   uses: slackapi/slack-github-action@v1.23.0
     #   with:
