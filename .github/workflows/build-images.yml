@@ -43,6 +43,8 @@ jobs:
         go get google.golang.org/grpc/status@v1.65.0
 
         go get contrib.go.opencensus.io/exporter/ocagent@v0.6.0
+        go get github.com/prometheus/client_golang/prometheus@v1.6.0
+        go get github.com/prometheus/client_golang/prometheus/promhttp@v1.6.0
 
     # - name: Notify Build Start
     #   uses: slackapi/slack-github-action@v1.23.0
