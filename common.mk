@@ -25,7 +25,7 @@ build-multi-arch:
 		-f ../Dockerfile-multi-arch --platform linux/amd64,linux/arm64,linux/arm/v7 --push
 
 compile:
-	GOOS=linux go build -v -o $(target_dir)/$(svc_name) cmd/server.go
+	GOOS=linux CGO_ENABLED=0 go build -v -o $(target_dir)/$(svc_name) cmd/server.go
 
 test:
 	go test ./...
