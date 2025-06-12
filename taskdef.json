@@ -1,0 +1,103 @@
+{
+    "containerDefinitions": [
+        {
+            "name": "le-emojivoto",
+            "image": "<IMAGE1_NAME>",
+            "cpu": 512,
+            "memory": 1024,
+            "portMappings": [
+                {
+                    "name": "le-emojivoto",
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "ENV",
+                    "value": "stg"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "linuxParameters": {
+                "initProcessEnabled": false
+            },
+            "secrets": [],
+            "startTimeout": 30,
+            "stopTimeout": 120,
+            "user": "0",
+            "privileged": false,
+            "readonlyRootFilesystem": true,
+            "interactive": false,
+            "pseudoTerminal": false,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/aws/ecs/le-emojivoto/le-emojivoto",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "le-emojivoto",
+    "taskRoleArn": "arn:aws:iam::523857393444:role/le-emojivoto-task-role",
+    "executionRoleArn": "arn:aws:iam::523857393444:role/le-emojivoto-task-exec",
+    "networkMode": "awsvpc",
+    "revision": 6,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "ecs.capability.secrets.asm.environment-variables"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.container-ordering"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "2048",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    }
+}
