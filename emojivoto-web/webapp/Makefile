@@ -4,4 +4,4 @@ all: webpack
 
 webpack:
 	yarn install
-	yarn webpack
+	NODE_OPTIONS=--openssl-legacy-provider yarn webpack
